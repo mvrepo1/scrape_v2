@@ -2,23 +2,45 @@ const splitIntoSentences = (text) => {
   if (!text || typeof text !== 'string') return [];
   const BOUNDARY = '\x00SPLIT\x00';
 
+  const isUpperishStart = (str) => /^["'\-\s]*[\p{Lu}]/u.test(str);
+
   let s = text;
 
   // Step 1: " " = speaker-change boundary
   s = s.replace(/" "/g, `"${BOUNDARY}"`);
 
   // Step 2: quoted speech ending with punctuation gets a boundary after the closing quote
-  s = s.replace(/"([^"]*[.!?…]+[\s]*)"([.,]?\s*)/g, (match, inner, after) => {
-    if (!inner.startsWith(' ')) {
-      return `"${inner}"${after.trim()}${BOUNDARY}`;
+  // ONLY if the quote is at the start of the current sentence/clause.
+  s = s.replace(/"([^"]*[.!?…]+[\s]*)"([.,]?\s*)/g, (match, inner, after, offset, fullString) => {
+    // 1. Get all text before the current quote
+    const textBefore = fullString.slice(0, offset);
+
+    // 2. Find where the previous sentence ended
+    let lastPunctIdx = -1;
+    for (let i = textBefore.length - 1; i >= 0; i--) {
+      if (/[.!?…]/.test(textBefore[i])) {
+        lastPunctIdx = i;
+        break;
+      }
     }
-    return match;
+
+    // 3. Check if there are letters/words between the start of the current sentence and the quote
+    const textBetween = textBefore.slice(lastPunctIdx + 1);
+    const textBetweenClean = textBetween.split(BOUNDARY).join('');
+    const hasWordsBefore = /[\p{L}\p{N}]/u.test(textBetweenClean);
+
+    // 4. If there are NO words before, it's safe to evaluate it as a dialogue tag split.
+    if (!hasWordsBefore) {
+      const rest = fullString.slice(offset + match.length);
+      if (rest.length === 0 || isUpperishStart(rest)) {
+        return `"${inner}"${after.trim()}${BOUNDARY}`;
+      }
+    }
+
+    return match; // Otherwise, leave it alone and let `splitSegment` handle outer punctuation
   });
 
   const segments = s.split(BOUNDARY).map(s => s.trim()).filter(Boolean);
-
-  // Returns true if a string begins with an uppercase letter (optionally preceded by quote/dash/space)
-  const isUpperishStart = (str) => /^["'\-\s]*[\p{Lu}]/u.test(str);
 
   // Split a segment at sentence-ending punctuation that is OUTSIDE of quotes
   const splitSegment = (seg) => {
@@ -27,8 +49,7 @@ const splitIntoSentences = (text) => {
     let inQuote = false;
     let i = 0;
 
-    // FIX: Check if the segment has unbalanced quotes.
-    // If quotes are odd, we ignore quote tracking so we don't swallow the rest of the text.
+    // Check if the segment has unbalanced quotes.
     const quoteCount = (seg.match(/"/g) || []).length;
     const ignoreQuotes = quoteCount % 2 !== 0;
 
@@ -84,7 +105,7 @@ const splitIntoSentences = (text) => {
     .map(s => {
       const trimmed = s.trim();
 
-      // FIX: Only remove a trailing quote if the total number of quotes is unbalanced (odd)
+      // Only remove a trailing quote if the total number of quotes is unbalanced
       const finalQuoteCount = (trimmed.match(/"/g) || []).length;
       if (finalQuoteCount % 2 !== 0 && trimmed.endsWith('"')) {
         return trimmed.slice(0, -1).trim();
@@ -103,13 +124,14 @@ const tests = [
   { label: 'Test 5', input: '"Ngươi là ai?" Hắn hỏi. "Ta không biết!" Nàng đáp.', expected: ['"Ngươi là ai?"', 'Hắn hỏi.', '"Ta không biết!"', 'Nàng đáp.'] },
   {
     label: 'Test 6',
-    input: 'Trung niên nam tử vừa nói xong, không có gì ngoài ý muốn, đám người trên quảng trường lại nổi lên trận trận châm chọc tao động"Ba đoạn? Hắc hắc, quả nhiên không ngoài dự đoán của ta, "Thiên tài" và "Thiên tài 2" này một năm rồi vẫn dậm chân tại chỗ a!"! Abc "Câu tiếp theo" câu tiếp theo của câu thiếu. Abc "Câu tiếp theo!" câu tiếp theo của câu thiếu... Abc "Câu tiếp theo?" câu tiếp theo của câu thiếu. Abc "Câu tiếp theo." câu tiếp theo của câu thiếu',
+    input: 'Trung niên nam tử vừa nói xong, không có gì ngoài ý muốn, đám người trên quảng trường lại nổi lên trận trận châm chọc tao động"Ba đoạn? Hắc hắc, quả nhiên không ngoài dự đoán của ta, "Thiên tài" và "Thiên tài 2" này một năm rồi vẫn dậm chân tại chỗ a!"! Abc "Câu tiếp theo" câu tiếp theo của câu thiếu. Abc "Câu tiếp theo!" câu tiếp theo của câu thiếu... Abc "Câu tiếp theo?" câu tiếp theo của câu thiếu. Abc "Câu tiếp theo." câu tiếp theo của câu thiếu? Abc "Câu tiếp theo."',
     expected: [
       'Trung niên nam tử vừa nói xong, không có gì ngoài ý muốn, đám người trên quảng trường lại nổi lên trận trận châm chọc tao động"Ba đoạn? Hắc hắc, quả nhiên không ngoài dự đoán của ta, "Thiên tài" và "Thiên tài 2" này một năm rồi vẫn dậm chân tại chỗ a!"!',
       'Abc "Câu tiếp theo" câu tiếp theo của câu thiếu.',
       'Abc "Câu tiếp theo!" câu tiếp theo của câu thiếu...',
-      'Abc "Câu tiếp theo?" câu tiếp theo của câu thiếu',
-      'Abc "Câu tiếp theo." câu tiếp theo của câu thiếu'
+      'Abc "Câu tiếp theo?" câu tiếp theo của câu thiếu.',
+      'Abc "Câu tiếp theo." câu tiếp theo của câu thiếu?',
+      'Abc "Câu tiếp theo."'
     ]
   },
   {
@@ -138,6 +160,15 @@ const tests = [
       '"Sắc mặt hơi đổi, Tiêu Chiến thu liễm nụ cười, Vân Lam tông tông chủ Vân Vận chính là Gia Mã đế quốc đại nhân vật, hắn nho nhỏ một cái tộc trưởng, nửa điểm đều không thể đắc tội.',
       'Bằng thế lực và thực lực của hắn, có việc gì lại cần Tiêu gia hỗ trợ?',
       'Cát Diệp nói cùng Nạp Lan chất nữ có quan hệ, chẳng lẽ?'
+    ]
+  }, {
+    label: 'Test 10',
+    input: 'Abc "Ngoặc kép." abc. Abc "Ngoặc kép2." Abc edf! Abc "Ngoặc kép3!" Abc edf? Abc "Ngoặc kép4?" Abc edf,',
+    expected: [
+      'Abc "Ngoặc kép." abc.',
+      'Abc "Ngoặc kép2." Abc edf!',
+      'Abc "Ngoặc kép3!" Abc edf?',
+      'Abc "Ngoặc kép4?" Abc edf,'
     ]
   }
 ];
