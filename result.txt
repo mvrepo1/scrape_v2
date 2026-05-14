@@ -1,0 +1,155 @@
+{
+  "total": 49,
+  "passed": 28,
+  "failed": 21,
+  "failedList": [
+    {
+      "index": 0,
+      "sentence": "Cả trường yên tĩnh hẳn so với bình thường",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 1,
+      "sentence": "Trong sân mọi người khiếp sợ nhìn tấm bia đá phía trên khắc năm chữ to, khuôn mặt phía trên đích biểu tình, cực kỳ phấn khích, một lúc sau, dồn dập đích hô hấp, giồng như bánh xe chuyển động, toàn trường nhất thời hô lên",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 3,
+      "sentence": "Trên đài cao, chén trà trong tay Tiêu Chiến, trực tiếp bị bóp nát thành bột phấn, nước trà pha lẫn bột phấn, theo bàn tay tích tích đáp đáp rơi xuống dưới",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 6,
+      "sentence": "\" Hai mắt nhìn vào tấm hắc thạch, lại nhìn hắc sam thiếu niên, trong mắt Tiêu Chiến thoáng có chút ướt át, hắn trong lòng biết rằng, để đạt được thành tựu này, thiếu niên đã phải nỗ lực, cố gắng thế nào …",
+      "issues": [
+        "Ngoặc thẳng lẻ: 1 cái"
+      ]
+    },
+    {
+      "index": 16,
+      "sentence": "Thầm thở ra một hơi, tựa hồ vẫn không tưởng tượng được, trong lòng vẫn rung động, trắc nghiệm viên cố gắng duy trì thanh âm trấn định, thế nhưng không giống như trước, thanh âm khó có thể che dấu được có chút run rẩy",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 17,
+      "sentence": "Nghe trắc nghiệm viên công bố, huấn luyện trường trước đó vốn đã yên tĩnh, nay lại càng thêm tĩnh lặng",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 18,
+      "sentence": "\"Cô lỗ \" Không biết là ai cuồng thôn khẩu thủy ( nuốt nước miếng), đột ngột truyền đến giữa sân huấn luyện",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 19,
+      "sentence": "Đứng ở trong đám người, khuôn mặt nhỏ bé của Tiêu Mị tràn đầy rung động",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 21,
+      "sentence": "Quả thực khiến cho người nghe hãi nhân",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 23,
+      "sentence": "Nhưng mà cái loại tốc độ này thật sự có chút khiến cho những người biết sự thật trái tim không khỏi co rút, khiến cho chúng nhân chăm chú nhìn vào thiếu niên đã tạo ra kì tích này",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 26,
+      "sentence": "Ngẩng đầu nhìn năm chữ to màu vàng trên thạch bia, Tiêu Viêm nhẹ nhàng thở ra một hơi, chung quanh bồng nhiên trở nên phức tạp, làm cho hắn hồi tưởng lại ba năm trước ý khí phong hoa đích thiếu niên",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 29,
+      "sentence": "Thầm thở ra một hơi, Tiêu Viêm tại trường ánh mắt chăm chú nhìn mọi người, cuối cùng ánh mắt tiếp xúc với Huân nhi đang cười, sau đó lui ra khỏi giữa sân",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 30,
+      "sentence": "Theo Tiêu Viêm lui ra ngoài, giữa sân vẫn như trước kia vẫn rất yên tĩnh",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 35,
+      "sentence": "Nghe vậy, giữa sân huấn luyện có chút tao loạn lên, kém một cấp bậc là có thể đủ tư cách, nhất thời những mục quang nóng bỏng hướng tới đám đồng bạn có đủ tư cách để khiêu chiến",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 36,
+      "sentence": "Mà đối mặt với từng đạo ánh mắt tràn ngập tính khiêu khích phía đối diện, nhóm đồng bạn này lại khinh thường giơ tay lên đầu, lục đoạn cùng với thất đoạn, căn bản là hai cấp bậc cách biệt, nếu không có gì đặc thù ngoài ý muốn, một gã có lục đoạn đấu khí rất khó có khả năng đả bại đối thủ có thất đoạn đấu khí",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 39,
+      "sentence": "Trong lúc nhất thời, giữa sân không khí có chút quái dị, từng đạo mục quang nóng cháy đảo qua những đồng bạn đủ tư cách, tất cả mọi người đều âm thầm lựa chọn đổi thủ tốt nhất để ứng phó",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 40,
+      "sentence": "Ngồi xếp bằng trên mặt đât, Tiêu Viêm bỗng nhiên nhíu nhíu my, hắn ngạc nhiên phát hiện, trong chúng nhân, có hơn phân nửa ánh mắt dừng lại trên người mình",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 42,
+      "sentence": "Thoáng kinh ngạc, Tiêu Viêm trong lòng có chút buồn cười",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 43,
+      "sentence": "\"Tiêu viêm ca ca một năm tăng lên tứ đoạn đấu khí tuy làm cho người ta rung động, chẳng qua nguyên nhân chính là mặc dù rung động, nhưng sâu trong lòng mỗi người có loại ảo giác không muốn tin tưởng điều này, cho nên bọn họ tự nhiên muốn hướng Tiêu Viêm ca ca khiêu chiến \" Một bên, Huân Nhi nhẹ giọng cười nói",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 46,
+      "sentence": "Lúc này ở giữa sân, rốt cục có người không nhịn được đã đứng dậy",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    },
+    {
+      "index": 48,
+      "sentence": "Thiếu niên tuy trên mặt nhìn như cung kính, chẳng qua hai mắt đang nhìn Tiêu Viêm, tổng hội lên nét nghi ngờ, khuôn mặt ẩn ẩn nét khinh thường, hắn thực không tin rằng phế vật Tiêu Viêm trước kia đã hồi phục lại",
+      "issues": [
+        "Không có dấu kết thúc câu"
+      ]
+    }
+  ],
+  "allPassed": false
+}
