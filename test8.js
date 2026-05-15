@@ -15,6 +15,8 @@ const splitIntoSentences = (text) => {
   ];
 
   const isUpperishStart = (str) => /^["'“「『\-\s]*[\p{Lu}]/u.test(str);
+  const isUpperishStartAfterSpace = (str) =>
+    /^["'"\u300c\u300e\-]*\s+["'"\u300c\u300e\-\s]*[\p{Lu}]/u.test(str);
 
   const isAbbreviation = (buffer) => {
     const trimmed = buffer.trim().replace(/[.!?…]+$/, '');
@@ -126,7 +128,10 @@ const splitIntoSentences = (text) => {
             canSplit = (!hasOuterWords || startedWithQuote);
           }
 
-          if (canSplit && (rest.trim().length === 0 || isUpperishStart(rest))) {
+          const isUnicodeEllipsisOnly = /^\u2026+$/.test(punct);
+          const upperCheck = isUnicodeEllipsisOnly ? isUpperishStartAfterSpace(rest) : isUpperishStart(rest);
+
+          if (canSplit && (rest.trim().length === 0 || upperCheck)) {
             results.push(fullCurrent.trim());
             current = '';
             hasOuterWords = false;
