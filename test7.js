@@ -1,35 +1,35 @@
 const splitIntoSentences = (text) => {
   if (!text || typeof text !== 'string') return [];
 
-  const openQuotes = ['"', '“', '「', '『'];
-  const closeQuotes = ['"', '”', '」', '』'];
+  // Nhận diện ký tự mở và đóng ngoặc
+  const openQuotes = ['"', '\u201c', '\u300c', '\u300e'];
+  const closeQuotes = ['"', '\u201d', '\u300d', '\u300f'];
   const allQuotes = [...openQuotes, ...closeQuotes];
 
-  // Danh sách từ viết tắt phổ biến (có thể mở rộng thêm)
-  const abbreviations = [
-    // Tiếng Anh - thông dụng trong truyện
-    'Mr', 'Mrs', 'Ms', 'Miss', 'Dr', 'Prof', 'St', 'Jr', 'Sr',
-    'Rev', 'Lt', 'Capt', 'Col', 'Gen', 'Sgt', 'Cpl', 'Pvt', 'Gov',
-    // Tiếng Việt
-    'GS', 'PGS', 'TS', 'ThS', 'BS', 'KS', 'LS', 'Tp', 'TP'
-  ];
+  const isUpperishStart = (str) => /^["\u201c\u201d\u300c\u300e\-\s]*[\p{Lu}]/u.test(str);
 
-  const isUpperishStart = (str) => /^["'“「『\-\s]*[\p{Lu}]/u.test(str);
-
-  const isAbbreviation = (buffer) => {
-    const trimmed = buffer.trim().replace(/[.!?…]+$/, '');
-    const words = trimmed.split(/[\s\.]+/);
-    const lastWord = words[words.length - 1];
-    return abbreviations.includes(lastWord);
-  };
-
+  // Hàm tiện ích đếm số lần xuất hiện của một ký tự
   const countChar = (str, char) => {
     let count = 0;
-    for (let i = 0; i < str.length; i++) if (str[i] === char) count++;
+    for (let i = 0; i < str.length; i++) {
+      if (str[i] === char) count++;
+    }
     return count;
   };
 
-  const specialPairs = { '“': '”', '「': '」', '『': '』' };
+  // Danh sách viết tắt — không cắt câu sau dấu chấm của các từ này
+  const abbreviations = new Set([
+    'Mr', 'Mrs', 'Ms', 'Miss', 'Dr', 'Prof', 'St', 'Jr', 'Sr',
+    'Rev', 'Lt', 'Capt', 'Col', 'Gen', 'Sgt', 'Cpl', 'Pvt', 'Gov',
+    'GS', 'PGS', 'TS', 'ThS', 'BS', 'KS', 'LS', 'Tp', 'TP'
+  ]);
+  const endsWithAbbreviation = (str) => {
+    const match = str.match(/(\p{L}+)\s*$/u);
+    return match ? abbreviations.has(match[1]) : false;
+  };
+
+  // Kiểm tra tính cân bằng của các dấu ngoặc đặc biệt
+  const specialPairs = { '\u201c': '\u201d', '\u300c': '\u300d', '\u300e': '\u300f' };
   const unbalanced = {};
   for (const [open, close] of Object.entries(specialPairs)) {
     if (countChar(text, open) !== countChar(text, close)) {
@@ -46,50 +46,87 @@ const splitIntoSentences = (text) => {
     let startedWithQuote = false;
     let i = 0;
 
+    // Kiểm tra tính cân bằng của dấu ngoặc kép thẳng
     const straightQuoteCount = countChar(seg, '"');
     const ignoreStraightQuotes = straightQuoteCount % 2 !== 0;
+
+    // FIX: track số " đã thấy để biết đang trong hay ngoài straight quote
+    let seenStraightQuotes = 0;
 
     while (i < seg.length) {
       const ch = seg[i];
 
+      // XỬ LÝ DẤU NGOẶC
       if (allQuotes.includes(ch)) {
+        // Xử lý riêng cho dấu ngoặc thẳng (")
         if (ch === '"') {
-          if (!ignoreStraightQuotes) {
-            if (quoteLevel > 0 && current.includes('"')) quoteLevel--;
-            else {
+          seenStraightQuotes++; // FIX: luôn đếm kể cả khi ignoreStraightQuotes
+
+          if (ignoreStraightQuotes) {
+            // FIX: vẫn set startedWithQuote khi " mở (seenSQ lẻ) và current trống
+            if (seenStraightQuotes % 2 === 1 && current.trim().replace(/^[\-\s]+/, '') === '') {
+              startedWithQuote = true;
+            }
+          } else {
+            if (quoteLevel > 0 && current.includes('"')) {
+              quoteLevel--;
+            } else {
               if (current.trim().replace(/^[\-\s]+/, '') === '') startedWithQuote = true;
               quoteLevel++;
             }
           }
         }
+        // Xử lý ngoặc cong/đặc biệt
         else if (openQuotes.includes(ch)) {
           if (!unbalanced[ch]) {
             if (current.trim().replace(/^[\-\s]+/, '') === '') startedWithQuote = true;
             quoteLevel++;
           }
         } else if (closeQuotes.includes(ch)) {
-          if (!unbalanced[ch]) quoteLevel = Math.max(0, quoteLevel - 1);
+          if (!unbalanced[ch]) {
+            quoteLevel = Math.max(0, quoteLevel - 1);
+          }
         }
 
         current += ch;
         i++;
 
-        if (quoteLevel === 0 && !unbalanced[ch]) {
+        // Khi vừa thoát ra khỏi lớp ngoặc ngoài cùng
+        // FIX: với straight quote và ignoreStraightQuotes=true,
+        // chỉ trigger block cắt khi seenSQ chẵn (vừa "đóng" quote)
+        const isStraightQuote = ch === '"';
+        const straightQuoteJustClosed = isStraightQuote && ignoreStraightQuotes && seenStraightQuotes % 2 === 0;
+        const shouldCheckSplit = quoteLevel === 0 && !unbalanced[ch] && (!isStraightQuote || !ignoreStraightQuotes || straightQuoteJustClosed);
+
+        if (shouldCheckSplit) {
           const rest = seg.slice(i);
           const nextNonSpaceMatch = rest.match(/^\s*(.)/);
+
           if (nextNonSpaceMatch) {
             const nextChar = nextNonSpaceMatch[1];
-            const endingPunctMatch = current.trimEnd().match(/([.!?…]+)["”」』]+$/);
+            // Fix: Cho phép khớp nhiều dấu ngoặc đóng (VD: !"")
+            const endingPunctMatch = current.trimEnd().match(/([.!?…]+)["\u201d\u300d\u300f]+$/);
 
             if (endingPunctMatch && (!hasOuterWords || startedWithQuote)) {
               const punct = endingPunctMatch[1];
               const isJustEllipsis = /^(\.{2,}|…+)$/.test(punct);
-              const textInsideQuote = current.replace(/^["'“「『\-\s]+/, '').replace(/["'”」』\s]+$/, '');
+
+              const nextQuoteIndex = rest.search(/["\u201c\u300c\u300e]/);
+              const textUntilNextQuote = nextQuoteIndex !== -1 ? rest.slice(0, nextQuoteIndex) : rest;
+              const firstEndPunctIndex = textUntilNextQuote.search(/[.!?…]/);
+              const hasEndPunctInRest = firstEndPunctIndex !== -1;
+              const textInFirstSentence = hasEndPunctInRest ? textUntilNextQuote.slice(0, firstEndPunctIndex) : textUntilNextQuote;
+
+              // FIX: chỉ coi là dialogue tag nếu đoạn trước dấu câu đủ ngắn (< 50 ký tự)
+              const hasCommaInFirstSentence = /,/.test(textInFirstSentence) && textInFirstSentence.trim().length < 50;
+
+              // Kiểm tra xem trong ngoặc có chứa nhiều câu con không
+              const textInsideQuote = current.replace(/^["\u201c\u201d\u300c\u300e\-\s]+/, '').replace(/["\u201c\u201d\u300d\u300f\s]+$/, '');
               const hasInternalSentence = /[.!?…]+[\s]+/.test(textInsideQuote);
 
-              // Kiểm tra viết tắt trước khi tách sau dấu ngoặc
-              if (!hasInternalSentence && !isAbbreviation(current)) {
-                if ((isUpperishStart(rest) && !isJustEllipsis) || allQuotes.includes(nextChar)) {
+              // Nếu trong ngoặc có nhiều câu, ưu tiên nối liền với dialogue tag phía sau
+              if (!hasInternalSentence) {
+                if ((isUpperishStart(rest) && !isJustEllipsis && hasEndPunctInRest && !hasCommaInFirstSentence) || allQuotes.includes(nextChar)) {
                   results.push(current.trim());
                   current = '';
                   hasOuterWords = false;
@@ -102,31 +139,36 @@ const splitIntoSentences = (text) => {
         continue;
       }
 
-      if (quoteLevel === 0 && /[.!?…]/.test(ch)) {
+      // XỬ LÝ DẤU CÂU (CHỈ KHI Ở NGOÀI NGOẶC)
+      // FIX: inStraightQuote chỉ true khi còn " phía sau để đóng
+      const remainingStraightQuotes = straightQuoteCount - seenStraightQuotes;
+      const inStraightQuote = ignoreStraightQuotes && (seenStraightQuotes % 2 === 1) && remainingStraightQuotes > 0;
+
+      if (quoteLevel === 0 && !inStraightQuote && /[.!?…]/.test(ch)) {
         let punct = '';
         while (i < seg.length && /[.!?…]/.test(seg[i])) {
           punct += seg[i];
           i++;
         }
+        current += punct;
 
-        const tempCurrent = current + punct;
         const rest = seg.slice(i);
-
-        // CHỈ TÁCH KHI KHÔNG PHẢI TỪ VIẾT TẮT
-        if (!isAbbreviation(tempCurrent)) {
-          if (rest.trim().length === 0 || isUpperishStart(rest)) {
-            results.push(tempCurrent.trim());
-            current = '';
-            hasOuterWords = false;
-            startedWithQuote = false;
-            continue;
-          }
+        // FIX: không cắt nếu token trước dấu chấm là viết tắt
+        const isAbbrev = punct === '.' && endsWithAbbreviation(current.slice(0, -1));
+        if (!isAbbrev && (rest.trim().length === 0 || isUpperishStart(rest))) {
+          results.push(current.trim());
+          current = '';
+          hasOuterWords = false;
+          startedWithQuote = false;
         }
-        current = tempCurrent;
         continue;
       }
 
-      if (quoteLevel === 0 && /[\p{L}\p{N}]/u.test(ch)) hasOuterWords = true;
+      // THEO DÕI CHỮ CÁI NGOÀI NGOẶC
+      if (quoteLevel === 0 && /[\p{L}\p{N}]/u.test(ch)) {
+        hasOuterWords = true;
+      }
+
       current += ch;
       i++;
     }
@@ -137,7 +179,65 @@ const splitIntoSentences = (text) => {
 
   return splitSegment(text)
     .map(s => s.trim())
-    .filter(s => s.replace(/["“”「」『』'.,!?…\-\s]/g, '').length > 0);
+    .filter(s => s.replace(/["""\u300c\u300d\u300e\u300f'.,!?…\-\s]/g, '').length > 0);
+};
+
+const verifySentencesPattern = (originalParagraph, sentences) => {
+  // Nếu input không có nội dung chữ/số thực sự → [] là đúng
+  const hasContent = /[\p{L}\p{N}]/u.test(originalParagraph);
+  if (!hasContent) {
+    return sentences.length === 0
+      ? { pass: true }
+      : { pass: false, error: 'Input rỗng nhưng có output.' };
+  }
+
+  if (!sentences || sentences.length === 0) return { pass: false, error: 'Empty output' };
+
+  // 1. Kiểm tra tính bảo toàn (Data Integrity)
+  const originalClean = originalParagraph.replace(/\s+/g, ' ').trim();
+  const outputClean = sentences.join(' ').replace(/\s+/g, ' ').trim();
+
+  if (originalClean !== outputClean) {
+    return { pass: false, error: 'Data Mismatch: Nội dung bị thay đổi hoặc mất ký tự.' };
+  }
+
+  // 2. Kiểm tra Pattern của từng câu
+  const openQuotes = ['"', '\u201c', '\u300c', '\u300e'];
+  const closeQuotes = ['"', '\u201d', '\u300d', '\u300f'];
+
+  for (let i = 0; i < sentences.length; i++) {
+    const s = sentences[i].trim();
+
+    // Kiểm tra câu trống
+    if (s.length === 0) return { pass: false, error: `Câu thứ ${i} bị rỗng.` };
+
+    // 3. Kiểm tra tính cân bằng dấu ngoặc trong từng câu
+    for (let j = 0; j < openQuotes.length; j++) {
+      const openIdx = openQuotes[j];
+      const closeIdx = closeQuotes[j];
+
+      const countOpen = (s.match(new RegExp(openIdx, 'g')) || []).length;
+      const countClose = (s.match(new RegExp(closeIdx, 'g')) || []).length;
+
+      const totalOpen = (originalParagraph.match(new RegExp(openIdx, 'g')) || []).length;
+      const totalClose = (originalParagraph.match(new RegExp(closeIdx, 'g')) || []).length;
+
+      if (totalOpen === totalClose && countOpen !== countClose) {
+        return { pass: false, error: `Cắt phạm vào giữa cặp ngoặc ${openIdx}${closeIdx} tại câu: ${s}` };
+      }
+    }
+
+    // 4. Kiểm tra dấu kết thúc câu (trừ câu cuối cùng có thể không có dấu)
+    if (i < sentences.length - 1) {
+      const lastChar = s.slice(-1);
+      const validEnd = /[.!?…"\u201d\u300d\u300f]/.test(lastChar);
+      if (!validEnd) {
+        return { pass: false, error: `Câu chưa kết thúc hợp lệ: ${s}` };
+      }
+    }
+  }
+
+  return { pass: true };
 };
 
 const tests = [

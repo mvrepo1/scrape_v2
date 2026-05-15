@@ -239,6 +239,13 @@ export const processChapter = (html) => {
   });
 
   const paragraphs = content.split('\n\n').filter(p => p.trim());
+  fs.writeFile('paragraphs.txt', JSON.stringify(paragraphs, null, 2), (err) => {
+    if (err) {
+      console.error("Lỗi khi lưu file:", err);
+    } else {
+      console.log("Đã tạo file paragraphs thành công!");
+    }
+  });
   const sentences = paragraphs.flatMap(p => {
     const ss = splitIntoSentences(p);
     return ss;

@@ -53,20 +53,17 @@ const splitIntoSentences = (text) => {
       const ch = seg[i];
 
       if (allQuotes.includes(ch)) {
+        // Luôn xác định xem phân đoạn có bắt đầu bằng dấu ngoặc kép không
+        if (current.trim().replace(/^[\-\s]+/, '') === '') startedWithQuote = true;
+
         if (ch === '"') {
           if (!ignoreStraightQuotes) {
             if (quoteLevel > 0 && current.includes('"')) quoteLevel--;
-            else {
-              if (current.trim().replace(/^[\-\s]+/, '') === '') startedWithQuote = true;
-              quoteLevel++;
-            }
+            else quoteLevel++;
           }
         }
         else if (openQuotes.includes(ch)) {
-          if (!unbalanced[ch]) {
-            if (current.trim().replace(/^[\-\s]+/, '') === '') startedWithQuote = true;
-            quoteLevel++;
-          }
+          if (!unbalanced[ch]) quoteLevel++;
         } else if (closeQuotes.includes(ch)) {
           if (!unbalanced[ch]) quoteLevel = Math.max(0, quoteLevel - 1);
         }
@@ -110,17 +107,34 @@ const splitIntoSentences = (text) => {
         }
 
         const tempCurrent = current + punct;
-        const rest = seg.slice(i);
 
         // CHỈ TÁCH KHI KHÔNG PHẢI TỪ VIẾT TẮT
         if (!isAbbreviation(tempCurrent)) {
-          if (rest.trim().length === 0 || isUpperishStart(rest)) {
-            results.push(tempCurrent.trim());
+          let trailingQuotes = '';
+          // Gom cả những dấu đóng ngoặc liền kề vào luôn
+          while (i < seg.length && /["'”」』]/.test(seg[i])) {
+            trailingQuotes += seg[i];
+            i++;
+          }
+
+          const fullCurrent = tempCurrent + trailingQuotes;
+          const rest = seg.slice(i);
+
+          let canSplit = true;
+          // Nếu câu kết thúc chứa dấu ngoặc, kiểm tra điều kiện câu rẽ nhánh
+          if (trailingQuotes.length > 0) {
+            canSplit = (!hasOuterWords || startedWithQuote);
+          }
+
+          if (canSplit && (rest.trim().length === 0 || isUpperishStart(rest))) {
+            results.push(fullCurrent.trim());
             current = '';
             hasOuterWords = false;
             startedWithQuote = false;
             continue;
           }
+          current = fullCurrent;
+          continue;
         }
         current = tempCurrent;
         continue;
